@@ -3,11 +3,19 @@ from __future__ import annotations
 from pathlib import Path
 from html import unescape
 import re, xml.etree.ElementTree as ET
+import json
 import requests
 from .models import ProductInput
 
 UA = {"User-Agent": "card-assistant-test/1.0"}
-def clean_html(value: str | None) -> str:
+def clean_text(value: str | None) -> str:
+    """Decode a short XML value without changing meaningful punctuation."""
+    value = re.sub(r"<[^>]+>", " ", value or "")
+    return re.sub(r"\s+", " ", unescape(value)).strip()
+
+
+def clean_description(value: str | None) -> str:
+    """Convert simple HTML descriptions into readable sentences."""
     value = value or ""
     value = re.sub(r"</(?:li|p)\s*>|<br\s*/?>", ". ", value, flags=re.I)
     value = re.sub(r"<[^>]+>", " ", value)
@@ -28,10 +36,10 @@ def parse(path: Path) -> list[ProductInput]:
         for _, el in ET.iterparse(path, events=("end",)):
             if el.tag != "offer": continue
             if el.attrib.get("available", "true") == "false": el.clear(); continue
-            text = lambda tag: clean_html(el.findtext(tag))
+            text = lambda tag: clean_text(el.findtext(tag))
             params: dict[str, str] = {}
             for p in el.findall("param"):
-                key, value = clean_html(p.get("name")), clean_html(p.text)
+                key, value = clean_text(p.get("name")), clean_text(p.text)
                 if not key or not value: continue
                 value = f"{value} {p.get('unit', '').strip()}".strip()
                 params[key] = f"{params[key]}; {value}" if key in params else value
@@ -40,7 +48,7 @@ def parse(path: Path) -> list[ProductInput]:
             if name:
                 for key, value in (("Тип оборудования", kind), ("Артикул производителя", text("vendorCode")), ("Модель", model), ("Страна происхождения", text("country_of_origin"))):
                     if value: params.setdefault(key, value)
-                products.append(ProductInput(name=name, manufacturer=vendor or "Данных нет", specs=params, description=text("description"), offer_id=el.get("id", ""), url=text("url"), category=text("categoryId")))
+                products.append(ProductInput(name=name, manufacturer=vendor or "Данных нет", specs=params, description=clean_description(el.findtext("description")), offer_id=el.get("id", ""), url=text("url"), category=text("categoryId")))
             el.clear()
     except ET.ParseError as exc: raise RuntimeError(f"Битый XML-фид: {exc}") from exc
     return products
@@ -55,3 +63,24 @@ def pick(products: list[ProductInput], ids: list[str] | None = None) -> list[Pro
     if not ranked: raise RuntimeError("В фиде нет подходящих товаров")
     first = ranked[0]; second = next((p for p in reversed(ranked) if p.category != first.category and any(w in p.name.lower() for w in INSTRUMENTS)), ranked[min(1, len(ranked)-1)])
     return [first, second]
+
+
+def enrich_from_page(product: ProductInput) -> ProductInput:
+    """Add confirmed JSON-LD description and properties from the public product page."""
+    if not product.url:
+        return product
+    try:
+        response = requests.get(product.url, headers=UA, timeout=30)
+        response.raise_for_status()
+        blocks = re.findall(r'<script type="application/ld\+json">\s*([\s\S]*?)</script>', response.text)
+        data = next((json.loads(block) for block in blocks if '"@type": "Product"' in block), {})
+    except (requests.RequestException, StopIteration, json.JSONDecodeError):
+        return product
+    specs = dict(product.specs)
+    for item in data.get("additionalProperty", []):
+        name = clean_text(item.get("name"))
+        value = clean_text(item.get("value"))
+        if name and value:
+            specs[name] = value
+    description = clean_description(data.get("description")) or product.description
+    return product.model_copy(update={"specs": specs, "description": description})

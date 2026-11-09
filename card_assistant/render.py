@@ -1,4 +1,4 @@
-import json
+import re
 from pathlib import Path
 from .models import Card
 def markdown(card: Card) -> str:
@@ -9,6 +9,8 @@ def markdown(card: Card) -> str:
 def save(cards: list[Card], out: Path, fmt: str) -> None:
     out.mkdir(parents=True,exist_ok=True)
     for card in cards:
-        safe="".join(c if c.isalnum() else "_" for c in card.product_name)[:48]
+        translit = card.product_name.encode("ascii", "ignore").decode().lower()
+        safe = re.sub(r"[^a-z0-9]+", "-", translit).strip("-") or "product"
+        safe = f"{card.source.get('offer_id', 'unknown')}_{safe[:48]}"
         if fmt in ("json","both"): (out/f"{safe}.json").write_text(card.model_dump_json(indent=2),encoding="utf8")
         if fmt in ("md","both"): (out/f"{safe}.md").write_text(markdown(card),encoding="utf8")

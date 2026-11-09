@@ -1,0 +1,8 @@
+flask>=3.0
+pydantic>=2.7
+requests>=2.31
+python-dotenv>=1.0
+
+# Development
+pytest>=8.0
+ruff>=0.6

@@ -5,6 +5,16 @@ description = "LLM-assisted B2B instrument card drafts without invented facts"
 requires-python = ">=3.11"
 dependencies = ["flask>=3.0", "pydantic>=2.7", "requests>=2.31", "python-dotenv>=1.0"]
 
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["card_assistant"]
+
+[tool.ruff]
+line-length = 100
+
 [project.scripts]
 card-assistant = "card_assistant.cli:main"
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 import argparse, json, sys, re
 from pathlib import Path
 from pydantic import ValidationError
-from .feed import fetch, parse, pick
+from .feed import enrich_from_page, fetch, parse, pick
 from .models import ProductInput, Card
 from .generator import generate
 from .checks import check
@@ -12,7 +12,10 @@ def product_file(path: Path) -> ProductInput:
     except (OSError, ValidationError, ValueError) as exc: raise RuntimeError(f"Некорректный входной JSON {path}: {exc}") from exc
 def cmd_feed(args):
     if args.action=="fetch": fetch(args.url,Path(args.out)); print(f"Фид сохранён: {args.out}"); return 0
-    chosen=pick(parse(Path(args.feed)),args.ids.split(",") if args.ids else None); out=Path(args.out); (out/"raw").mkdir(parents=True,exist_ok=True)
+    chosen=pick(parse(Path(args.feed)),args.ids.split(",") if args.ids else None)
+    chosen[0] = enrich_from_page(chosen[0])
+    out=Path(args.out)
+    (out/"raw").mkdir(parents=True,exist_ok=True)
     xml=Path(args.feed).read_text(encoding="utf8",errors="ignore")
     for i,p in enumerate(chosen,1):
         (out/f"product_{i}.json").write_text(p.model_dump_json(indent=2),encoding="utf8")
