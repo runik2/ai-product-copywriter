@@ -1,0 +1,9 @@
+{
+  "name": "ai-product-copywriter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Production-minded MVP for generating SEO product content from a YML feed with an LLM.",
+  "scripts": {"generate":"node src/cli.js","test":"node --test","lint":"node --check src/cli.js && node --check src/feed.js && node --check src/format.js && node --check src/generator.js && node --check src/schema.js"},
+  "engines": {"node": ">=20"}
+}
