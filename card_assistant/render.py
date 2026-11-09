@@ -1,6 +1,45 @@
 import re
 from pathlib import Path
+
 from .models import Card
+
+TRANSLIT = str.maketrans(
+    {
+        "а": "a",
+        "б": "b",
+        "в": "v",
+        "г": "g",
+        "д": "d",
+        "е": "e",
+        "ё": "e",
+        "ж": "zh",
+        "з": "z",
+        "и": "i",
+        "й": "y",
+        "к": "k",
+        "л": "l",
+        "м": "m",
+        "н": "n",
+        "о": "o",
+        "п": "p",
+        "р": "r",
+        "с": "s",
+        "т": "t",
+        "у": "u",
+        "ф": "f",
+        "х": "kh",
+        "ц": "ts",
+        "ч": "ch",
+        "ш": "sh",
+        "щ": "shch",
+        "ъ": "",
+        "ы": "y",
+        "ь": "",
+        "э": "e",
+        "ю": "yu",
+        "я": "ya",
+    }
+)
 
 
 def markdown(card: Card) -> str:
@@ -24,13 +63,18 @@ def markdown(card: Card) -> str:
     )
 
 
+def slug(value: str) -> str:
+    """Build a safe ASCII slug from a mixed Russian/Latin product name."""
+    transliterated = value.lower().translate(TRANSLIT)
+    safe = re.sub(r"[^a-z0-9]+", "-", transliterated).strip("-")
+    return safe[:64].strip("-") or "product"
+
+
 def save(cards: list[Card], out: Path, fmt: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
     for card in cards:
-        translit = card.product_name.encode("ascii", "ignore").decode().lower()
-        safe = re.sub(r"[^a-z0-9]+", "-", translit).strip("-") or "product"
-        safe = f"{card.source.get('offer_id', 'unknown')}_{safe[:48]}"
+        name = f"{card.source.get('offer_id', 'unknown')}_{slug(card.product_name)}"
         if fmt in ("json", "both"):
-            (out / f"{safe}.json").write_text(card.model_dump_json(indent=2), encoding="utf8")
+            (out / f"{name}.json").write_text(card.model_dump_json(indent=2), encoding="utf8")
         if fmt in ("md", "both"):
-            (out / f"{safe}.md").write_text(markdown(card), encoding="utf8")
+            (out / f"{name}.md").write_text(markdown(card), encoding="utf8")
