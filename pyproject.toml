@@ -1,0 +1,12 @@
+[project]
+name = "card-assistant"
+version = "1.0.0"
+description = "LLM-assisted B2B instrument card drafts without invented facts"
+requires-python = ">=3.11"
+dependencies = ["flask>=3.0", "pydantic>=2.7", "requests>=2.31", "python-dotenv>=1.0"]
+
+[project.scripts]
+card-assistant = "card_assistant.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

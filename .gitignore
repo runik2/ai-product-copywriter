@@ -1,4 +1,8 @@
 .env
-output/
-node_modules/
+.venv/
+__pycache__/
+.pytest_cache/
+data/
 *.log
+output/
+*.egg-info/

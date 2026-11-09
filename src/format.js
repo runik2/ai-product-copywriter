@@ -1,3 +1,0 @@
-export function toMarkdown(result) {
-  return ['# Черновики товарных карточек', '', ...result.products.flatMap(p => [`## ${p.name}`, '', `**SEO-заголовок:** ${p.seoTitle}`, '', `**Производитель:** ${p.manufacturer}`, '', '**Характеристики:**', ...Object.entries(p.specs).map(([key, value]) => `- **${key}:** ${value}`), '', '**SEO-описание:**', p.seoDescription, '', '**Поисковые запросы:**', ...p.searchQueries.map(query => `- ${query}`), '', '**Commercial-блок:**', `- **Кому подходит:** ${p.commercialBlock.suitableFor}`, `- **Какие задачи решает:** ${p.commercialBlock.solvesTasks}`, `- **Призыв к действию:** ${p.commercialBlock.cta}`, '', `**Данные требуют уточнения:** ${p.missingFields.length ? p.missingFields.join(', ') : 'нет'}`, ''])].join('\n');
-}
