@@ -14,14 +14,14 @@ const attr = (xml, name) => {
 };
 
 export function parseYml(xml, limit = 2) {
-  const offers = [...xml.matchAll(/<offer\b[\s\S]*?<\/offer>/gi)].slice(0, limit);
+  const offers = [...xml.matchAll(/<offer\b[\s\S]*?<\/offer>/gi)];
   return offers.map(({ 0: offer }) => ({
     id: attr(offer, 'id'), available: attr(offer, 'available') !== 'false',
     name: tag(offer, 'name'), typePrefix: tag(offer, 'typePrefix'), url: tag(offer, 'url'),
     vendor: tag(offer, 'vendor'), vendorCode: tag(offer, 'vendorCode'), picture: tag(offer, 'picture'),
     price: Number(tag(offer, 'price')) || null, currency: tag(offer, 'currencyId'),
     params: Object.fromEntries([...offer.matchAll(/<param\s+name="([^"]*)">([\s\S]*?)<\/param>/gi)].map(m => [decode(m[1]), decode(m[2])]))
-  }));
+  })).filter(product => product.available).slice(0, limit);
 }
 
 export async function loadProducts(url, limit = 2) {
