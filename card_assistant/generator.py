@@ -1,8 +1,15 @@
 from __future__ import annotations
-from .models import ProductInput, Card, CommercialBlock, Validation
-from .missing import assess, characteristics
+
+from pydantic import ValidationError
+
 from .checks import check
+from .errors import ResultError
 from .llm import complete
+from .missing import assess, characteristics
+from .models import Card, CommercialBlock, ProductInput, Validation
+
+PROMPT_VERSION = "v2"
+MAX_ATTEMPTS = 3
 
 
 def deterministic(product: ProductInput) -> Card:
@@ -18,10 +25,12 @@ def deterministic(product: ProductInput) -> Card:
         seo_description="",
         search_queries=[],
         commercial_block=CommercialBlock(),
+        validation=Validation(prompt_version=PROMPT_VERSION),
     )
 
 
 def generate(product: ProductInput, dry_run: bool = False) -> Card:
+    """Generate a card, retrying at most three times and keeping the best attempt."""
     base = deterministic(product)
     if not product.name or (not product.specs and not product.description):
         base.validation.warnings.append("llm_skipped: недостаточно исходных данных")
@@ -36,10 +45,12 @@ def generate(product: ProductInput, dry_run: bool = False) -> Card:
         "category": product.category,
         "missing_fields": [x.field for x in base.missing_data],
     }
-    best: Card | None = None
-    for _ in range(3):
-        feedback = best.validation.warnings if best else None
+    attempts: list[Card] = []
+    for _ in range(MAX_ATTEMPTS):
+        feedback = attempts[-1].validation.warnings if attempts else None
         data = complete(payload, feedback)
+        if not isinstance(data, dict):
+            raise ResultError("Модель вернула JSON, который не является объектом")
         data.update(
             {
                 "product_name": product.name,
@@ -49,17 +60,18 @@ def generate(product: ProductInput, dry_run: bool = False) -> Card:
                 "key_characteristics": [x.model_dump() for x in base.key_characteristics],
             }
         )
-        card = Card.model_validate(data)
+        try:
+            card = Card.model_validate(data)
+        except ValidationError as exc:
+            raise ResultError(f"Модель вернула невалидную карточку: {exc}") from exc
         warnings = check(card, product)
         card.validation = Validation(
             title_length=len(card.seo_title),
             description_length=len(card.seo_description),
-            prompt_version="v2",
+            prompt_version=PROMPT_VERSION,
             warnings=warnings,
         )
-        if best is None or len(card.validation.warnings) < len(best.validation.warnings):
-            best = card
+        attempts.append(card)
         if not warnings:
             break
-    assert best is not None
-    return best
+    return min(attempts, key=lambda item: len(item.validation.warnings))
