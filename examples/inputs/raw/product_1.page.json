@@ -1,0 +1,46 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "testo мини-термометр поверхностный - для измерения температуры поверхностей",
+  "sku": "63471",
+  "description": "Поверхностный мини-термометрПривлекательная цена. Прибор оснащен расширенным измерительным наконечником, что делает его особенно удобным для проведения измерений температуры поверхности.Преимущества мини-термометра:Универсальный прибор для измерения поверхностной температурыБольшой четкий дисплейДиапазон измерений -50 … +300 °CИндикатор ресурса батареи",
+  "image": "https://www.souz-pribor.ru/upload/iblock/f02/f0235c1521e70b7f98fb82e56a1165b4.jpg",
+  "brand": {
+    "@type": "Brand",
+    "name": "Testo"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "5337",
+    "priceCurrency": "RUB",
+    "url": "https://www.souz-pribor.ru/product/testo-mini-termometr-poverkhnostnyy/",
+    "availability": "http://schema.org/InStock"
+  },
+  "additionalProperty": [
+    {
+      "@type": "PropertyValue",
+      "name": "Популярные подборки",
+      "value": "Поверхностные термометры"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Верхний предел измерений",
+      "value": "300"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Нижний предел измерений",
+      "value": "-50"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Измерение влажности",
+      "value": "Нет"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Память",
+      "value": "Нет"
+    }
+  ]
+}
