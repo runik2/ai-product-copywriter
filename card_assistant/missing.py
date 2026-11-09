@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import json
 import re
 from pathlib import Path
-from .models import ProductInput, MissingData, KeyCharacteristic
+
+from .models import KeyCharacteristic, MissingData, ProductInput
 
 PROFILES = json.loads(
     (Path(__file__).parents[1] / "config" / "expected_specs.json").read_text(encoding="utf8")
