@@ -47,8 +47,10 @@ def parse(path: Path) -> list[ProductInput]:
             if el.attrib.get("available", "true") == "false":
                 el.clear()
                 continue
+
             def text(tag: str) -> str:
                 return clean_text(el.findtext(tag))
+
             params: dict[str, str] = {}
             for p in el.findall("param"):
                 key, value = clean_text(p.get("name")), clean_text(p.text)

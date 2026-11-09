@@ -36,9 +36,10 @@ def generate(product: ProductInput, dry_run: bool = False) -> Card:
         "category": product.category,
         "missing_fields": [x.field for x in base.missing_data],
     }
-    best = None
-    for retry in range(3):
-        data = complete(payload, (best.validation.warnings if best else None))
+    best: Card | None = None
+    for _ in range(3):
+        feedback = best.validation.warnings if best else None
+        data = complete(payload, feedback)
         data.update(
             {
                 "product_name": product.name,
@@ -50,13 +51,15 @@ def generate(product: ProductInput, dry_run: bool = False) -> Card:
         )
         card = Card.model_validate(data)
         warnings = check(card, product)
-        warnings.append("prompt_version:v2")
         card.validation = Validation(
             title_length=len(card.seo_title),
             description_length=len(card.seo_description),
+            prompt_version="v2",
             warnings=warnings,
         )
-        best = card
+        if best is None or len(card.validation.warnings) < len(best.validation.warnings):
+            best = card
         if not warnings:
             break
+    assert best is not None
     return best

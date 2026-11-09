@@ -24,7 +24,8 @@ def cmd_feed(args):
         print(f"Фид сохранён: {args.out}")
         return 0
     chosen = pick(parse(Path(args.feed)), args.ids.split(",") if args.ids else None)
-    chosen[0] = enrich_from_page(chosen[0])
+    if args.enrich:
+        chosen = [enrich_from_page(product) for product in chosen]
     out = Path(args.out)
     (out / "raw").mkdir(parents=True, exist_ok=True)
     xml = Path(args.feed).read_text(encoding="utf8", errors="ignore")
@@ -76,6 +77,7 @@ def main(argv=None):
     fp = fsub.add_parser("pick")
     fp.add_argument("--feed", default="data/feed.xml")
     fp.add_argument("--ids")
+    fp.add_argument("--enrich", action="store_true")
     fp.add_argument("--out", default="examples/inputs")
     gen = sub.add_parser("generate")
     gen.add_argument("inputs", nargs="+")

@@ -40,6 +40,7 @@ class CommercialBlock(BaseModel):
 class Validation(BaseModel):
     title_length: int = 0
     description_length: int = 0
+    prompt_version: str = "v2"
     warnings: list[str] = Field(default_factory=list)
 
 

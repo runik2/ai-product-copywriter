@@ -7,7 +7,7 @@ import re
 from .models import Card, ProductInput
 
 RISKY_PATTERNS = (
-    r"\bцен\w*",
+    r"\bцен(?:а|ы|е|у|ой|ами|ах|ник|ов\w*)\b",
     r"\bстоимост\w*",
     r"\bдоставк\w*",
     r"\bгаранти\w*",
@@ -21,7 +21,7 @@ RISKY_PATTERNS = (
     r"\bстран\w*",
     r"\bлучший\b|№\s*1|\bуникальн\w*|\bидеальн\w*|\bлидер\w*",
 )
-UNITS = r"мпа|кпа|bar|°c|℃|мм|в|ма|гц|кг|%"
+UNITS = r"мпа|кпа|bar|°c|℃|мм|ма|гц|кг|%"
 
 
 def normalize(text: str) -> str:
@@ -31,10 +31,8 @@ def normalize(text: str) -> str:
 
 def numeric_pairs(text: str) -> set[tuple[str, str]]:
     """Return normalized number-unit pairs."""
-    return {
-        (number, unit)
-        for number, unit in re.findall(rf"(\d+(?:\.\d+)?)\s*({UNITS})\b", normalize(text))
-    }
+    pattern = rf"(\d+(?:\.\d+)?)\s*({UNITS})(?!\w)"
+    return {(number, unit) for number, unit in re.findall(pattern, normalize(text))}
 
 
 def plain_numbers(text: str) -> set[str]:
