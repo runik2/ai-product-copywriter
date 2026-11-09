@@ -152,4 +152,8 @@ def enrich_from_page(product: ProductInput) -> ProductInput:
         if name and value:
             specs[name] = value
     description = clean_description(data.get("description")) or product.description
+    description = re.sub(r"[^.]*\bцен\w*[^.]*\.?", "", description, flags=re.IGNORECASE).strip()
+    range_match = re.search(r"(-?\d+)\s*[…-]\s*\+?(\d+)\s*(°C|℃)", description)
+    if range_match:
+        specs["Диапазон измерений"] = " ".join(range_match.groups())
     return product.model_copy(update={"specs": specs, "description": description})

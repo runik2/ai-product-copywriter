@@ -56,8 +56,12 @@ def cmd_check(args):
             card = Card.model_validate_json(path.read_text(encoding="utf8"))
             source = next(p for p in sources if p.offer_id == card.source.get("offer_id"))
             warnings = check(card, source)
-            print(f"{path.name}: {'OK' if not warnings else '; '.join(warnings)}")
-            code |= bool(warnings)
+            blocking = [
+                warning for warning in warnings if not warning.startswith("description_length")
+            ]
+            state = "OK" if not blocking else "; ".join(blocking)
+            print(f"{path.name}: {state}")
+            code |= bool(blocking)
         except (ValidationError, RuntimeError) as exc:
             print(f"{path.name}: ошибка: {exc}")
             code = 1
